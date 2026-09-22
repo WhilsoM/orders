@@ -18,5 +18,16 @@ type OrderItem struct {
 	UnitPrice float32
 }
 
-type CreateOrder struct {
+type CreateOrderInput struct {
+	Items []CreateOrderItemInput
+}
+
+type CreateOrderItemInput struct {
+	ProductID int
+	Quantity  int
+}
+
+type Data struct {
+	ProductID int
+	Quantity  int
 }
