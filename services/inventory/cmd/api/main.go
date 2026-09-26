@@ -1,18 +1,21 @@
 package main
 
 import (
-	"log/slog"
-	"net/http"
+	"log"
+	"net"
 )
 
 func main() {
-	app := newApp()
+	listener, err := net.Listen("tcp", ":50051")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	port := ":3000"
+	server := newGRPCServer()
 
-	slog.Info("orders service is started", "port", port)
+	log.Println("inventory grpc service started", "port", ":50051")
 
-	if err := http.ListenAndServe(port, app); err != nil {
-		panic(err)
+	if err := server.Serve(listener); err != nil {
+		log.Fatal(err)
 	}
 }

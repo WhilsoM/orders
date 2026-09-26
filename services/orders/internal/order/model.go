@@ -38,3 +38,9 @@ type Data struct {
 	Quantity  int
 	UnitPrice int
 }
+
+type InventoryItem struct {
+	ProductID int64
+	Quantity  int
+	UnitPrice int64
+}

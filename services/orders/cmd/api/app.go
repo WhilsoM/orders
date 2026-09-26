@@ -2,6 +2,7 @@ package main
 
 import (
 	"backend/pkg/psql"
+	"backend/services/orders/internal/adapters/inventorygrpc"
 	"backend/services/orders/internal/adapters/postgresql"
 	"backend/services/orders/internal/adapters/transport"
 	"backend/services/orders/internal/order"
@@ -32,7 +33,13 @@ func newApp() *chi.Mux {
 	log.Println("database connected")
 
 	repo := postgresql.NewOrdersRepository(db)
-	svc := order.NewOrderService(repo)
+
+	inventoryClient, err := inventorygrpc.NewClient("localhost:50051")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	svc := order.NewOrderService(repo, inventoryClient)
 	handler := transport.NewOrderTransport(svc)
 
 	r.Post("/orders", handler.CreateOrder)

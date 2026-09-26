@@ -1,18 +1,17 @@
 package main
 
 import (
+	inventorypb "backend/pkg/gen/inventory"
 	"backend/pkg/psql"
+	"backend/services/inventory/internal/adapters/postgresql"
+	"backend/services/inventory/internal/adapters/transport"
+	"backend/services/inventory/internal/inventory"
 	"log"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"google.golang.org/grpc"
 )
 
-func newApp() *chi.Mux {
-	r := chi.NewRouter()
-
-	r.Use(middleware.Logger)
-
+func newGRPCServer() *grpc.Server {
 	client := psql.PostgresClient{
 		Host:     "localhost",
 		User:     "postgres",
@@ -21,14 +20,24 @@ func newApp() *chi.Mux {
 		Port:     "5432",
 		Sslmode:  "disable",
 	}
+
 	db, err := psql.NewPostgres(client)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	_ = db
+	log.Println("database connected to inventory")
 
-	log.Println("database connected")
+	repo := postgresql.NewInventoryRepository(db)
+	svc := inventory.NewInventoryService(repo)
+	handler := transport.NewGRPCServer(svc)
 
-	return r
+	server := grpc.NewServer()
+
+	inventorypb.RegisterInventoryServiceServer(
+		server,
+		handler,
+	)
+
+	return server
 }

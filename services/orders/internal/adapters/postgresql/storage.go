@@ -4,130 +4,48 @@ import (
 	"backend/services/orders/internal/order"
 	"errors"
 	"fmt"
-	"log/slog"
-	"strings"
 
 	"gorm.io/gorm"
 )
 
 type orderRepository struct {
-	inventory []order.Data
-
 	db *gorm.DB
 }
 
 func NewOrdersRepository(db *gorm.DB) *orderRepository {
 	return &orderRepository{
 		db: db,
-		inventory: []order.Data{
-			{
-				ProductID: 22,
-				Quantity:  2,
-				UnitPrice: 21,
-			},
-			{
-				ProductID: 23,
-				Quantity:  1,
-				UnitPrice: 22,
-			},
-			{
-				ProductID: 24,
-				Quantity:  4,
-				UnitPrice: 23,
-			},
-		},
 	}
 }
 
-func (o *orderRepository) CreateOrder(input order.CreateOrderInput) (order.OrderCreated, error) {
-	issues := make([]string, 0)
-
-	// product_id: quantity
-	aggregatedItems := make(map[int]order.Data, 0)
-
-	slog.Info("inventory", "items", o.inventory)
-
-	for _, val := range input.Items {
-		item := aggregatedItems[val.ProductID]
-		item.Quantity += val.Quantity
-
-		aggregatedItems[val.ProductID] = item
+func (o *orderRepository) CreateOrder(input []order.InventoryItem) (order.OrderCreated, error) {
+	orderModel := OrderModel{
+		Status: "received",
 	}
 
-	for productID, item := range aggregatedItems {
-		found := false
-
-		for _, inv := range o.inventory {
-			if inv.ProductID == productID {
-				found = true
-
-				if inv.Quantity < item.Quantity {
-					slog.Info("found an item but don't have enough quantity",
-						"product_id", inv.ProductID,
-						"quantity", inv.Quantity,
-						"requested_quantity", item.Quantity,
-					)
-
-					msg := fmt.Sprintf("don't have enough quantity product id %d inv quantity %d", productID, inv.Quantity)
-					issues = append(issues, msg)
-				} else {
-					slog.Info("found an item",
-						"product_id", inv.ProductID,
-						"quantity", inv.Quantity,
-						"unit_price", inv.UnitPrice,
-					)
-
-					item.UnitPrice = inv.UnitPrice
-					aggregatedItems[productID] = item
-				}
-
-				break
-			}
-		}
-
-		if !found {
-			msg := fmt.Sprintf("not found product id %d", productID)
-			issues = append(issues, msg)
-		}
+	if err := o.db.Create(&orderModel).Error; err != nil {
+		return order.OrderCreated{}, fmt.Errorf("create order: %w", err)
 	}
 
-	if len(issues) == 0 {
-		orderModel := OrderModel{
-			Status: "received",
-		}
+	items := make([]OrderItemModel, 0, len(input))
 
-		if err := o.db.Create(&orderModel).Error; err != nil {
-			return order.OrderCreated{}, fmt.Errorf("create order: %w", err)
-		}
-
-		items := make([]OrderItemModel, 0, len(aggregatedItems))
-
-		for productID, item := range aggregatedItems {
-			items = append(items, OrderItemModel{
-				OrderID:   orderModel.ID,
-				ProductID: int64(productID),
-				Quantity:  item.Quantity,
-				UnitPrice: float64(item.UnitPrice),
-			})
-		}
-
-		if err := o.db.Create(&items).Error; err != nil {
-			return order.OrderCreated{}, fmt.Errorf("create order items: %w", err)
-		}
-
-		return order.OrderCreated{
-			OrderID: int(orderModel.ID),
-			Status:  orderModel.Status,
-		}, nil
+	for productID, item := range input {
+		items = append(items, OrderItemModel{
+			OrderID:   orderModel.ID,
+			ProductID: int64(productID),
+			Quantity:  item.Quantity,
+			UnitPrice: float64(item.UnitPrice),
+		})
 	}
 
-	var builder strings.Builder
-
-	for _, issue := range issues {
-		builder.WriteString(issue)
+	if err := o.db.Create(&items).Error; err != nil {
+		return order.OrderCreated{}, fmt.Errorf("create order items: %w", err)
 	}
 
-	return order.OrderCreated{}, errors.New(builder.String())
+	return order.OrderCreated{
+		OrderID: int(orderModel.ID),
+		Status:  orderModel.Status,
+	}, nil
 }
 
 func (o *orderRepository) GetOrder(orderID int) (order.Order, error) {

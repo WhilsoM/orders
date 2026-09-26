@@ -2,6 +2,7 @@ package transport
 
 import (
 	"backend/services/orders/internal/order"
+	"context"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -9,16 +10,16 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-type orderServiceI interface {
-	CreateOrder(items order.CreateOrderInput) (order.OrderCreated, error)
-	GetOrder(orderID int) (order.Order, error)
+type orderService interface {
+	CreateOrder(ctx context.Context, items order.CreateOrderInput) (order.OrderCreated, error)
+	GetOrder(ctx context.Context, orderID int) (order.Order, error)
 }
 
 type orderTransport struct {
-	svc orderServiceI
+	svc orderService
 }
 
-func NewOrderTransport(svc orderServiceI) *orderTransport {
+func NewOrderTransport(svc orderService) *orderTransport {
 	return &orderTransport{
 		svc,
 	}
@@ -52,7 +53,7 @@ func (o *orderTransport) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		Items: items,
 	}
 
-	order, err := o.svc.CreateOrder(input)
+	order, err := o.svc.CreateOrder(r.Context(), input)
 	if err != nil {
 		slog.Error("failed to create order", "error", err)
 		writeError(w, http.StatusBadGateway, err.Error())
@@ -80,7 +81,7 @@ func (o *orderTransport) GetOrderByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orderData, err := o.svc.GetOrder(id)
+	orderData, err := o.svc.GetOrder(r.Context(), id)
 	if err != nil {
 		slog.Info("get order by id", "error", err)
 		writeError(w, http.StatusBadGateway, err.Error())

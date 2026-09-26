@@ -1,6 +1,8 @@
 package postgresql
 
 import (
+	"backend/services/inventory/internal/inventory"
+
 	"gorm.io/gorm"
 )
 
@@ -14,8 +16,8 @@ func NewInventoryRepository(db *gorm.DB) *inventoryRepository {
 	}
 }
 
-func (r *inventoryRepository) GetItems(productIDs []int64) ([]ItemModel, error) {
-	var items []ItemModel
+func (r *inventoryRepository) GetItems(productIDs []int64) ([]inventory.ItemModel, error) {
+	var items []inventory.ItemModel
 
 	if err := r.db.
 		Where("product_id IN ?", productIDs).

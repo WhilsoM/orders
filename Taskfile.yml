@@ -6,9 +6,12 @@ vars:
   DB_URL: "postgres://postgres:mysecretpassword@localhost:5432/orders?sslmode=disable"
 
 tasks:
-  run:
+  run:order:
     cmds:
-      - go run ./services/{{.SERVICE}}/cmd/api/
+      - go run ./services/orders/cmd/api/
+  run:inventory:
+    cmds:
+      - go run ./services/inventory/cmd/api/
 
   test:
     cmds:

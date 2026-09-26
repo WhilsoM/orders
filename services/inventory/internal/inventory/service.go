@@ -1,9 +1,7 @@
 package inventory
 
-import "backend/services/inventory/internal/adapters/postgresql"
-
 type InventoryRepository interface {
-	GetItems(productIDs []int64) ([]postgresql.ItemModel, error)
+	GetItems(productIDs []int64) ([]ItemModel, error)
 }
 
 type inventoryService struct {
@@ -16,7 +14,6 @@ func NewInventoryService(repo InventoryRepository) *inventoryService {
 	}
 }
 
-// orders-service -> grpc -> inventory-service
 func (s *inventoryService) GetItems(productIDs []int64) ([]Item, error) {
 	if len(productIDs) == 0 {
 		return []Item{}, nil
