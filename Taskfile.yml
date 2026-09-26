@@ -1,9 +1,14 @@
 version: "3"
 
+vars:
+  SERVICE: '{{default "orders" .SERVICE}}'
+  MIGRATIONS: ./services/{{.SERVICE}}/migrations
+  DB_URL: "postgres://postgres:mysecretpassword@localhost:5432/orders?sslmode=disable"
+
 tasks:
   run:
     cmds:
-      - go run ./services/orders/cmd/api/
+      - go run ./services/{{.SERVICE}}/cmd/api/
 
   test:
     cmds:
@@ -16,3 +21,19 @@ tasks:
   tidy:
     cmds:
       - go mod tidy
+
+  migrate:create:
+    cmds:
+      - goose -dir {{.MIGRATIONS}} create {{.CLI_ARGS}} sql
+
+  migrate:up:
+    cmds:
+      - goose -dir {{.MIGRATIONS}} postgres "{{.DB_URL}}" up
+
+  migrate:down:
+    cmds:
+      - goose -dir {{.MIGRATIONS}} postgres "{{.DB_URL}}" down
+
+  migrate:status:
+    cmds:
+      - goose -dir {{.MIGRATIONS}} postgres "{{.DB_URL}}" status

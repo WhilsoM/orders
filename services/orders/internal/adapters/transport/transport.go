@@ -10,8 +10,8 @@ import (
 )
 
 type orderServiceI interface {
-	CreateOrder(items order.CreateOrderInput) (string, error)
-	GetOrder(orderID int) ([]order.Data, error)
+	CreateOrder(items order.CreateOrderInput) (order.OrderCreated, error)
+	GetOrder(orderID int) (order.Order, error)
 }
 
 type orderTransport struct {
@@ -52,7 +52,7 @@ func (o *orderTransport) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		Items: items,
 	}
 
-	status, err := o.svc.CreateOrder(input)
+	order, err := o.svc.CreateOrder(input)
 	if err != nil {
 		slog.Error("failed to create order", "error", err)
 		writeError(w, http.StatusBadGateway, err.Error())
@@ -60,7 +60,8 @@ func (o *orderTransport) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, CreateOrderResponse{
-		Status: status,
+		OrderID: order.OrderID,
+		Status:  order.Status,
 	})
 }
 
@@ -79,20 +80,31 @@ func (o *orderTransport) GetOrderByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	order, err := o.svc.GetOrder(id)
+	orderData, err := o.svc.GetOrder(id)
 	if err != nil {
 		slog.Info("get order by id", "error", err)
-		writeError(w, http.StatusBadGateway, "something went wrong...")
+		writeError(w, http.StatusBadGateway, err.Error())
 		return
 	}
 
-	res := make([]GetOrderByIDResponse, len(order))
+	items := make([]GetOrderByIDItem, len(orderData.Items))
 
-	for i, val := range order {
-		res[i] = GetOrderByIDResponse{
-			ProductID: val.ProductID,
-			Quantity:  val.Quantity,
+	for i, v := range orderData.Items {
+		items[i] = GetOrderByIDItem{
+			ID:        v.ID,
+			ProductID: v.ProductID,
+			Quantity:  v.Quantity,
+			UnitPrice: v.UnitPrice,
 		}
+	}
+
+	res := GetOrderByIDResponse{
+		ID:          orderData.ID,
+		Status:      orderData.Status,
+		TotalAmount: orderData.TotalAmount,
+		CreatedAt:   orderData.CreatedAt,
+		UpdatedAt:   orderData.UpdatedAt,
+		Items:       items,
 	}
 
 	writeJSON(w, http.StatusOK, res)

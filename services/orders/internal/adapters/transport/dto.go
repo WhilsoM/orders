@@ -1,18 +1,26 @@
 package transport
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
+
+type Order struct {
+	ProductID int `json:"product_id"`
+	Quantity  int `json:"quantity"`
+}
 
 type CreateOrderRequest struct {
 	Items []CreateOrderItemRequest `json:"items"`
 }
 
 type CreateOrderItemRequest struct {
-	ProductID int `json:"product_id"`
-	Quantity  int `json:"quantity"`
+	Order
 }
 
 type CreateOrderResponse struct {
-	Status string `json:"status"`
+	OrderID int    `json:"order_id"`
+	Status  string `json:"status"`
 }
 
 func (r CreateOrderRequest) Validate() error {
@@ -48,6 +56,17 @@ func (i CreateOrderItemRequest) Validate(index int) error {
 }
 
 type GetOrderByIDResponse struct {
-	ProductID int `json:"product_id"`
-	Quantity  int `json:"quantity"`
+	ID          int                `json:"id"`
+	Status      string             `json:"status"`
+	TotalAmount int                `json:"total_amount"`
+	CreatedAt   time.Time          `json:"created_at"`
+	UpdatedAt   time.Time          `json:"updated_at"`
+	Items       []GetOrderByIDItem `json:"items"`
+}
+
+type GetOrderByIDItem struct {
+	ID        int     `json:"id"`
+	ProductID int     `json:"product_id"`
+	Quantity  int     `json:"quantity"`
+	UnitPrice float32 `json:"unit_price"`
 }

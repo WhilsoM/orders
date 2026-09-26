@@ -6,8 +6,8 @@ import (
 )
 
 type orderRepository interface {
-	CreateOrder(input CreateOrderInput) (string, error)
-	GetOrder(orderID int) ([]Data, error)
+	CreateOrder(input CreateOrderInput) (OrderCreated, error)
+	GetOrder(orderID int) (Order, error)
 }
 
 type orderService struct {
@@ -20,25 +20,40 @@ func NewOrderService(repo orderRepository) *orderService {
 	}
 }
 
-func (o *orderService) CreateOrder(input CreateOrderInput) (string, error) {
+func (o *orderService) CreateOrder(input CreateOrderInput) (OrderCreated, error) {
 	slog.Info(
 		"order created",
 		"items_count", len(input.Items),
 	)
 
-	status, err := o.repo.CreateOrder(input)
+	order, err := o.repo.CreateOrder(input)
 	if err != nil {
-		return "", err
+		return OrderCreated{}, err
 	}
 
-	return status, nil
+	return order, nil
 }
 
-func (o *orderService) GetOrder(orderID int) ([]Data, error) {
+func (o *orderService) GetOrder(orderID int) (Order, error) {
 	result, err := o.repo.GetOrder(orderID)
 	if err != nil {
-		return []Data{}, fmt.Errorf("get order by id has an error: %w", err)
+		return Order{}, fmt.Errorf("get order by id has an error: %w", err)
 	}
 
-	return result, nil
+	totalAmount := 0
+
+	for _, v := range result.Items {
+		totalAmount += int(v.UnitPrice) * v.Quantity
+	}
+
+	slog.Info("order", "total_amount", totalAmount)
+
+	return Order{
+		ID:          result.ID,
+		Status:      result.Status,
+		TotalAmount: totalAmount,
+		CreatedAt:   result.CreatedAt,
+		UpdatedAt:   result.UpdatedAt,
+		Items:       result.Items,
+	}, nil
 }

@@ -8,6 +8,7 @@ type Order struct {
 	TotalAmount int
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	Items       []OrderItem
 }
 
 type OrderItem struct {
@@ -27,7 +28,13 @@ type CreateOrderItemInput struct {
 	Quantity  int
 }
 
+type OrderCreated struct {
+	OrderID int
+	Status  string
+}
+
 type Data struct {
 	ProductID int
 	Quantity  int
+	UnitPrice int
 }
