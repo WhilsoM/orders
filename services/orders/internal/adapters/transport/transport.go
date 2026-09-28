@@ -92,7 +92,6 @@ func (o *orderTransport) GetOrderByID(w http.ResponseWriter, r *http.Request) {
 
 	for i, v := range orderData.Items {
 		items[i] = GetOrderByIDItem{
-			ID:        v.ID,
 			ProductID: v.ProductID,
 			Quantity:  v.Quantity,
 			UnitPrice: v.UnitPrice,

@@ -44,3 +44,8 @@ type InventoryItem struct {
 	Quantity  int
 	UnitPrice int64
 }
+
+type DecreaseInventoryItem struct {
+	ProductID int64
+	Quantity  int
+}

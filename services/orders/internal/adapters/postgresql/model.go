@@ -14,7 +14,6 @@ func (OrderModel) TableName() string {
 }
 
 type OrderItemModel struct {
-	ID        int64
 	OrderID   int64
 	ProductID int64
 	Quantity  int

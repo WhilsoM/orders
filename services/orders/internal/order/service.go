@@ -10,6 +10,7 @@ import (
 
 type InventoryClient interface {
 	GetItems(ctx context.Context, productIDs []int64) ([]InventoryItem, error)
+	DecreaseItems(ctx context.Context, items []DecreaseInventoryItem) error
 }
 
 type orderRepository interface {
@@ -115,40 +116,39 @@ func (o *orderService) CreateOrder(ctx context.Context, input CreateOrderInput) 
 		return OrderCreated{}, errors.New(builder.String())
 	}
 
-	order, err := o.repo.CreateOrder(products)
+	itemsToCreate := make([]InventoryItem, 0, len(products))
+
+	for _, product := range products {
+		requested := aggregatedItems[int(product.ProductID)]
+
+		itemsToCreate = append(itemsToCreate, InventoryItem{
+			ProductID: product.ProductID,
+			Quantity:  requested.Quantity,
+			UnitPrice: product.UnitPrice,
+		})
+	}
+
+	order, err := o.repo.CreateOrder(itemsToCreate)
 	if err != nil {
+		return OrderCreated{}, err
+	}
+
+	itemsToDecrease := make([]DecreaseInventoryItem, 0, len(aggregatedItems))
+
+	for productID, item := range aggregatedItems {
+		itemsToDecrease = append(itemsToDecrease, DecreaseInventoryItem{
+			ProductID: int64(productID),
+			Quantity:  item.Quantity,
+		})
+	}
+
+	if err := o.inventory.DecreaseItems(ctx, itemsToDecrease); err != nil {
 		return OrderCreated{}, err
 	}
 
 	return order, nil
 }
 
-// FIX: need to do grpc request to inventory to get unti price from inventory db cause we need to get total amount and etc.
-//
-//	{
-//	  "id": 9,
-//	  "status": "received",
-//	  "total_amount": 82,
-//	  "created_at": "2026-09-26T21:13:27.533172Z",
-//	  "updated_at": "2026-09-26T21:13:27.533172Z",
-//	  "items": [
-//	    {
-//	      "id": 7,
-//	      "product_id": 0,
-//	      "quantity": 3,
-//	      "unit_price": 23
-//	    },
-//	    {
-//	      "id": 8,
-//	      "product_id": 1,
-//	      "quantity": 1,
-//	      "unit_price": 13
-//	    }
-//	  ]
-//	}
-//
-// product id is not correct and id too?
-// total amount isnt correct
 func (o *orderService) GetOrder(ctx context.Context, orderID int) (Order, error) {
 	result, err := o.repo.GetOrder(orderID)
 	if err != nil {

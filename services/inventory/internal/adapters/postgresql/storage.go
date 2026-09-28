@@ -2,6 +2,7 @@ package postgresql
 
 import (
 	"backend/services/inventory/internal/inventory"
+	"fmt"
 
 	"gorm.io/gorm"
 )
@@ -27,4 +28,36 @@ func (r *inventoryRepository) GetItems(productIDs []int64) ([]inventory.ItemMode
 	}
 
 	return items, nil
+}
+
+func (r *inventoryRepository) DecreaseItems(items []inventory.DecreaseItem) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		for _, item := range items {
+			result := tx.
+				Model(&inventory.ItemModel{}).
+				Where(
+					"product_id = ? AND quantity >= ?",
+					item.ProductID,
+					item.Quantity,
+				).
+				Update(
+					"quantity",
+					gorm.Expr("quantity - ?", item.Quantity),
+				)
+
+			if result.Error != nil {
+				return result.Error
+			}
+
+			if result.RowsAffected == 0 {
+				return fmt.Errorf(
+					"cannot decrease product %d by %d",
+					item.ProductID,
+					item.Quantity,
+				)
+			}
+		}
+
+		return nil
+	})
 }

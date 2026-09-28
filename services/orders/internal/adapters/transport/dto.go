@@ -65,7 +65,6 @@ type GetOrderByIDResponse struct {
 }
 
 type GetOrderByIDItem struct {
-	ID        int     `json:"id"`
 	ProductID int     `json:"product_id"`
 	Quantity  int     `json:"quantity"`
 	UnitPrice float32 `json:"unit_price"`

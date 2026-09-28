@@ -1,7 +1,10 @@
 package inventory
 
+import "fmt"
+
 type InventoryRepository interface {
 	GetItems(productIDs []int64) ([]ItemModel, error)
+	DecreaseItems(items []DecreaseItem) error
 }
 
 type inventoryService struct {
@@ -35,4 +38,21 @@ func (s *inventoryService) GetItems(productIDs []int64) ([]Item, error) {
 	}
 
 	return items, nil
+}
+
+func (s *inventoryService) DecreaseItems(items []DecreaseItem) error {
+	if len(items) == 0 {
+		return nil
+	}
+
+	for _, item := range items {
+		if item.Quantity <= 0 {
+			return fmt.Errorf(
+				"invalid quantity for product %d",
+				item.ProductID,
+			)
+		}
+	}
+
+	return s.repo.DecreaseItems(items)
 }

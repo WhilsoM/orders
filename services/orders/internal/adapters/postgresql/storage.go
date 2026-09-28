@@ -23,23 +23,30 @@ func (o *orderRepository) CreateOrder(input []order.InventoryItem) (order.OrderC
 		Status: "received",
 	}
 
-	if err := o.db.Create(&orderModel).Error; err != nil {
-		return order.OrderCreated{}, fmt.Errorf("create order: %w", err)
-	}
+	err := o.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&orderModel).Error; err != nil {
+			return fmt.Errorf("create order: %w", err)
+		}
 
-	items := make([]OrderItemModel, 0, len(input))
+		items := make([]OrderItemModel, 0, len(input))
 
-	for productID, item := range input {
-		items = append(items, OrderItemModel{
-			OrderID:   orderModel.ID,
-			ProductID: int64(productID),
-			Quantity:  item.Quantity,
-			UnitPrice: float64(item.UnitPrice),
-		})
-	}
+		for _, item := range input {
+			items = append(items, OrderItemModel{
+				OrderID:   orderModel.ID,
+				ProductID: item.ProductID,
+				Quantity:  item.Quantity,
+				UnitPrice: float64(item.UnitPrice),
+			})
+		}
 
-	if err := o.db.Create(&items).Error; err != nil {
-		return order.OrderCreated{}, fmt.Errorf("create order items: %w", err)
+		if err := tx.Create(&items).Error; err != nil {
+			return fmt.Errorf("create order items: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return order.OrderCreated{}, err
 	}
 
 	return order.OrderCreated{
@@ -74,7 +81,6 @@ func (o *orderRepository) GetOrder(orderID int) (order.Order, error) {
 
 	for _, item := range orderItems {
 		result.Items = append(result.Items, order.OrderItem{
-			ID:        int(item.ID),
 			OrderID:   int(item.OrderID),
 			ProductID: int(item.ProductID),
 			Quantity:  item.Quantity,

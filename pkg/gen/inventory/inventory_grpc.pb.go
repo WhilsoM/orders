@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.2
 // - protoc             v7.36.2
-// source: proto/inventory.proto
+// source: inventory.proto
 
 package inventorypb
 
@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	InventoryService_GetItems_FullMethodName = "/inventory.InventoryService/GetItems"
+	InventoryService_GetItems_FullMethodName      = "/inventory.InventoryService/GetItems"
+	InventoryService_DecreaseItems_FullMethodName = "/inventory.InventoryService/DecreaseItems"
 )
 
 // InventoryServiceClient is the client API for InventoryService service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type InventoryServiceClient interface {
 	GetItems(ctx context.Context, in *GetItemsRequest, opts ...grpc.CallOption) (*GetItemsResponse, error)
+	DecreaseItems(ctx context.Context, in *DecreaseItemsRequest, opts ...grpc.CallOption) (*DecreaseItemsResponse, error)
 }
 
 type inventoryServiceClient struct {
@@ -47,11 +49,22 @@ func (c *inventoryServiceClient) GetItems(ctx context.Context, in *GetItemsReque
 	return out, nil
 }
 
+func (c *inventoryServiceClient) DecreaseItems(ctx context.Context, in *DecreaseItemsRequest, opts ...grpc.CallOption) (*DecreaseItemsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DecreaseItemsResponse)
+	err := c.cc.Invoke(ctx, InventoryService_DecreaseItems_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InventoryServiceServer is the server API for InventoryService service.
 // All implementations must embed UnimplementedInventoryServiceServer
 // for forward compatibility.
 type InventoryServiceServer interface {
 	GetItems(context.Context, *GetItemsRequest) (*GetItemsResponse, error)
+	DecreaseItems(context.Context, *DecreaseItemsRequest) (*DecreaseItemsResponse, error)
 	mustEmbedUnimplementedInventoryServiceServer()
 }
 
@@ -64,6 +77,9 @@ type UnimplementedInventoryServiceServer struct{}
 
 func (UnimplementedInventoryServiceServer) GetItems(context.Context, *GetItemsRequest) (*GetItemsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetItems not implemented")
+}
+func (UnimplementedInventoryServiceServer) DecreaseItems(context.Context, *DecreaseItemsRequest) (*DecreaseItemsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DecreaseItems not implemented")
 }
 func (UnimplementedInventoryServiceServer) mustEmbedUnimplementedInventoryServiceServer() {}
 func (UnimplementedInventoryServiceServer) testEmbeddedByValue()                          {}
@@ -104,6 +120,24 @@ func _InventoryService_GetItems_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InventoryService_DecreaseItems_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DecreaseItemsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InventoryServiceServer).DecreaseItems(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InventoryService_DecreaseItems_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InventoryServiceServer).DecreaseItems(ctx, req.(*DecreaseItemsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // InventoryService_ServiceDesc is the grpc.ServiceDesc for InventoryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -115,7 +149,11 @@ var InventoryService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetItems",
 			Handler:    _InventoryService_GetItems_Handler,
 		},
+		{
+			MethodName: "DecreaseItems",
+			Handler:    _InventoryService_DecreaseItems_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/inventory.proto",
+	Metadata: "inventory.proto",
 }

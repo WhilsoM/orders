@@ -4,6 +4,7 @@ vars:
   SERVICE: '{{default "orders" .SERVICE}}'
   MIGRATIONS: ./services/{{.SERVICE}}/migrations
   DB_URL: "postgres://postgres:mysecretpassword@localhost:5432/orders?sslmode=disable"
+  PROTO_FILE: ./proto/{{.SERVICE}}.proto
 
 tasks:
   run:order:
@@ -12,6 +13,18 @@ tasks:
   run:inventory:
     cmds:
       - go run ./services/inventory/cmd/api/
+
+  gen:
+    desc: Generate protobuf and gRPC code
+    cmds:
+      - >
+        protoc
+        --proto_path=./proto
+        --go_out=.
+        --go_opt=module=backend
+        --go-grpc_out=.
+        --go-grpc_opt=module=backend
+        {{.PROTO_FILE}}
 
   test:
     cmds:

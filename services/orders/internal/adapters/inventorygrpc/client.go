@@ -53,3 +53,30 @@ func (c *Client) GetItems(
 
 	return items, nil
 }
+
+func (c *Client) DecreaseItems(
+	ctx context.Context,
+	items []order.DecreaseInventoryItem,
+) error {
+	pbItems := make([]*inventorypb.DecreaseItem, 0, len(items))
+
+	for _, item := range items {
+		pbItems = append(pbItems, &inventorypb.DecreaseItem{
+			ProductId: item.ProductID,
+			Quantity:  int32(item.Quantity),
+		})
+	}
+
+	_, err := c.client.DecreaseItems(
+		ctx,
+		&inventorypb.DecreaseItemsRequest{
+			Items: pbItems,
+		},
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

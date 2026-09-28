@@ -8,6 +8,7 @@ import (
 
 type InventoryService interface {
 	GetItems(productIDs []int64) ([]inventory.Item, error)
+	DecreaseItems(items []inventory.DecreaseItem) error
 }
 
 type grpcServer struct {
@@ -43,4 +44,24 @@ func (s *grpcServer) GetItems(
 	return &inventorypb.GetItemsResponse{
 		Items: pbItems,
 	}, nil
+}
+
+func (s *grpcServer) DecreaseItems(
+	ctx context.Context,
+	req *inventorypb.DecreaseItemsRequest,
+) (*inventorypb.DecreaseItemsResponse, error) {
+	items := make([]inventory.DecreaseItem, 0, len(req.Items))
+
+	for _, item := range req.Items {
+		items = append(items, inventory.DecreaseItem{
+			ProductID: item.ProductId,
+			Quantity:  int(item.Quantity),
+		})
+	}
+
+	if err := s.service.DecreaseItems(items); err != nil {
+		return nil, err
+	}
+
+	return &inventorypb.DecreaseItemsResponse{}, nil
 }
