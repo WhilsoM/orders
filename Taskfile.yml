@@ -13,6 +13,9 @@ tasks:
   run:inventory:
     cmds:
       - go run ./services/inventory/cmd/api/
+  run:support:
+    cmds:
+      - go run ./services/support/cmd/api/
 
   gen:
     desc: Generate protobuf and gRPC code

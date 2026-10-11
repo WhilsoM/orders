@@ -5,6 +5,7 @@ import (
 	"backend/services/orders/internal/adapters/inventorygrpc"
 	"backend/services/orders/internal/adapters/postgresql"
 	"backend/services/orders/internal/adapters/transport"
+	"backend/services/orders/internal/config"
 	"backend/services/orders/internal/order"
 	"log"
 
@@ -12,18 +13,22 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func newApp() *chi.Mux {
+func newApp(cfg *config.Config) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
 
 	client := psql.PostgresClient{
-		Host:     "localhost",
-		User:     "postgres",
-		Password: "mysecretpassword",
-		Dbname:   "orders",
-		Port:     "5432",
-		Sslmode:  "disable",
+		Host:            cfg.DBHost,
+		User:            cfg.DBUser,
+		Password:        cfg.DBPassword,
+		Dbname:          cfg.DBDbname,
+		Port:            cfg.DBPort,
+		Sslmode:         cfg.DBSslmode,
+		MaxOpenConns:    cfg.MaxOpenConns,
+		MaxIdleConns:    cfg.MaxIdleConns,
+		ConnMaxLifetime: cfg.ConnMaxLifetime,
+		ConnMaxIdleTime: cfg.ConnMaxIdleTime,
 	}
 	db, err := psql.NewPostgres(client)
 	if err != nil {
@@ -34,7 +39,7 @@ func newApp() *chi.Mux {
 
 	repo := postgresql.NewOrdersRepository(db)
 
-	inventoryClient, err := inventorygrpc.NewClient("localhost:50051")
+	inventoryClient, err := inventorygrpc.NewClient(cfg.GrpcInventoryClient)
 	if err != nil {
 		log.Fatal(err)
 	}

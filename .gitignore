@@ -1,1 +1,88 @@
+
+# ==========================================
+# Environment variables & secrets
+# ==========================================
+
 .env
+.env.*
+**/.env
+**/.env.*
+
+# Allow example configs
+!.env.example
+!**/.env.example
+
+# Private keys & certificates
+*.pem
+*.key
+*.p12
+*.pfx
+
+# ==========================================
+# Go binaries & build artifacts
+# ==========================================
+
+/bin/
+/build/
+/dist/
+
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+coverage/
+coverage.out
+coverage.html
+
+# ==========================================
+# Go workspace
+# ==========================================
+
+go.work.sum
+
+# ==========================================
+# IDE & editor
+# ==========================================
+
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ==========================================
+# macOS
+# ==========================================
+
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ==========================================
+# Logs & temporary files
+# ==========================================
+
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+
+# ==========================================
+# Local database & Docker data
+# ==========================================
+
+/data/
+/postgres_data/
+/pgdata/
+
+# ==========================================
+# Local overrides
+# ==========================================
+
+docker-compose.override.yml
+compose.override.yaml

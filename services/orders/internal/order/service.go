@@ -128,6 +128,9 @@ func (o *orderService) CreateOrder(ctx context.Context, input CreateOrderInput) 
 		})
 	}
 
+	// BUG: if create order is success
+	// but we get an error, inventory cannot decrease items
+	// and order is already received, but inventory has same items
 	order, err := o.repo.CreateOrder(itemsToCreate)
 	if err != nil {
 		return OrderCreated{}, err
@@ -141,7 +144,7 @@ func (o *orderService) CreateOrder(ctx context.Context, input CreateOrderInput) 
 			Quantity:  item.Quantity,
 		})
 	}
-
+	// here is a problem
 	if err := o.inventory.DecreaseItems(ctx, itemsToDecrease); err != nil {
 		return OrderCreated{}, err
 	}

@@ -1,18 +1,18 @@
 package main
 
 import (
+	"backend/services/orders/internal/config"
 	"log/slog"
 	"net/http"
 )
 
 func main() {
-	app := newApp()
+	cfg := config.MustConfig()
+	app := newApp(cfg)
 
-	port := ":3000"
+	slog.Info("orders service is started", "port", cfg.HttpPort)
 
-	slog.Info("orders service is started", "port", port)
-
-	if err := http.ListenAndServe(port, app); err != nil {
+	if err := http.ListenAndServe(cfg.HttpPort, app); err != nil {
 		panic(err)
 	}
 }
