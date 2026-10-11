@@ -8,6 +8,7 @@ import (
 	"backend/services/orders/internal/config"
 	"backend/services/orders/internal/order"
 	"log"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -27,8 +28,8 @@ func newApp(cfg *config.Config) *chi.Mux {
 		Sslmode:         cfg.DBSslmode,
 		MaxOpenConns:    cfg.MaxOpenConns,
 		MaxIdleConns:    cfg.MaxIdleConns,
-		ConnMaxLifetime: cfg.ConnMaxLifetime,
-		ConnMaxIdleTime: cfg.ConnMaxIdleTime,
+		ConnMaxLifetime: cfg.ConnMaxLifetime * time.Minute,
+		ConnMaxIdleTime: cfg.ConnMaxIdleTime * time.Minute,
 	}
 	db, err := psql.NewPostgres(client)
 	if err != nil {
